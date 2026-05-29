@@ -13,18 +13,13 @@ interface BrapiQuote {
   marketCap?: number;
 }
 
-/**
- * Atualiza preços (e nome/market cap quando disponíveis) de uma lista de tickers.
- * Retorna um mapa ticker → patch parcial; falhas por ticker são ignoradas.
- */
-export async function fetchQuotes(
+/** Busca um lote de tickers numa única requisição (`/quote/A,B,C`). */
+async function fetchQuoteChunk(
   tickers: string[],
   token?: string,
 ): Promise<Record<string, Partial<AssetSnapshot>>> {
-  if (tickers.length === 0) return {};
   const url = new URL(`${BASE}/quote/${tickers.join(",")}`);
   if (token) url.searchParams.set("token", token);
-
   const res = await fetch(url.toString());
   if (!res.ok) throw new Error(`brapi: HTTP ${res.status}`);
   const json: { results?: BrapiQuote[] } = await res.json();
@@ -40,6 +35,44 @@ export async function fetchQuotes(
     };
   }
   return out;
+}
+
+/** Executa `fn` sobre os itens com concorrência limitada (evita 429). */
+async function mapLimit<T, R>(items: T[], limit: number, fn: (item: T) => Promise<R>): Promise<PromiseSettledResult<R>[]> {
+  const results: PromiseSettledResult<R>[] = [];
+  for (let i = 0; i < items.length; i += limit) {
+    const slice = items.slice(i, i + limit);
+    results.push(...(await Promise.allSettled(slice.map(fn))));
+  }
+  return results;
+}
+
+/**
+ * Atualiza preços de uma lista de tickers. Tenta um único lote (rápido) e, se a
+ * brapi recusar (ex.: HTTP 400 — limite de tickers do plano gratuito ou um ticker
+ * inválido derrubando o lote), refaz ticker a ticker, tolerando falhas individuais.
+ * Só propaga o erro se NENHUM ticker funcionar (assim o status reflete a falha real).
+ */
+export async function fetchQuotes(
+  tickers: string[],
+  token?: string,
+): Promise<Record<string, Partial<AssetSnapshot>>> {
+  if (tickers.length === 0) return {};
+  try {
+    return await fetchQuoteChunk(tickers, token);
+  } catch (batchError) {
+    const settled = await mapLimit(tickers, 5, (t) => fetchQuoteChunk([t], token));
+    const out: Record<string, Partial<AssetSnapshot>> = {};
+    let anySuccess = false;
+    for (const r of settled) {
+      if (r.status === "fulfilled") {
+        Object.assign(out, r.value);
+        anySuccess = true;
+      }
+    }
+    if (!anySuccess) throw batchError; // todas falharam → mantém o erro p/ o status
+    return out;
+  }
 }
 
 export interface BrapiValidation {
