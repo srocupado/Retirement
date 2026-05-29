@@ -11,7 +11,7 @@ export interface SleeveAssumption {
   label: string;
   role: IncomeRole;
   /** Título indexado à inflação (principal se corrige sozinho)? */
-  indexed: boolean;
+  indexed?: boolean;
   /** Taxa real anual (para indexados/caixa). */
   realRate?: number;
   /** Yield de caixa nominal (para FII/ações não indexados). */

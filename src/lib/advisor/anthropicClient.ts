@@ -20,17 +20,16 @@ export async function runAdvisor(
     dangerouslyAllowBrowser: true,
   });
 
+  // Bloco de sistema estável → habilita prompt caching (GA na API; o cast cobre
+  // a tipagem do SDK 0.32, que só declara cache_control no namespace beta).
+  const system = [
+    { type: "text" as const, text: SYSTEM_PROMPT, cache_control: { type: "ephemeral" as const } },
+  ] as unknown as Anthropic.MessageCreateParamsNonStreaming["system"];
+
   const response = await client.messages.create({
     model,
     max_tokens: 1500,
-    system: [
-      {
-        type: "text",
-        text: SYSTEM_PROMPT,
-        // Bloco estável → habilita prompt caching e reduz custo/latência.
-        cache_control: { type: "ephemeral" },
-      },
-    ],
+    system,
     messages: [{ role: "user", content: buildUserMessage(ctx) }],
   });
 

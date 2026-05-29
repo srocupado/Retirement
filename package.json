@@ -6,11 +6,11 @@
   "description": "Planejador de aposentadoria brasileiro: renda perpétua real líquida de impostos, análise de ativos (FIIs, ações, ETFs, cripto, renda fixa) e consultor de IA. SPA estática para GitHub Pages.",
   "scripts": {
     "dev": "vite",
-    "build": "tsc -b && vite build",
+    "build": "tsc --noEmit && vite build",
     "preview": "vite preview",
     "test": "vitest run",
     "test:watch": "vitest",
-    "typecheck": "tsc -b --noEmit"
+    "typecheck": "tsc --noEmit"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.32.1",

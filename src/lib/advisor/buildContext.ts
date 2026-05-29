@@ -1,4 +1,3 @@
-import type { ScreenResult } from "../screener";
 import type { PortfolioProjection } from "../portfolio";
 import type { MarketRates } from "../marketData";
 
