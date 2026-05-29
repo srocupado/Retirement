@@ -34,6 +34,7 @@ export function PortfolioCompare({
                 <th>Carteira</th>
                 <th className="num">Rend. real líquido</th>
                 <th className="num">Patrimônio necessário</th>
+                <th className="num">Renda estimada/mês</th>
                 <th className="num">vs baseline</th>
               </tr>
             </thead>
@@ -42,6 +43,7 @@ export function PortfolioCompare({
                 const delta = baseline && isFinite(p.requiredNestEgg) && isFinite(baseline.requiredNestEgg)
                   ? p.requiredNestEgg / baseline.requiredNestEgg - 1
                   : null;
+                const meetsTarget = p.projectedMonthly >= target;
                 return (
                   <tr key={p.id}>
                     <td>
@@ -52,6 +54,9 @@ export function PortfolioCompare({
                     </td>
                     <td className="num">{pct(p.blendedSpendableYield)}</td>
                     <td className="num">{money(p.requiredNestEgg)}</td>
+                    <td className="num" style={{ color: meetsTarget ? "var(--accent)" : undefined }} title={meetsTarget ? "Atinge a meta" : "Abaixo da meta"}>
+                      {money2(p.projectedMonthly)}
+                    </td>
                     <td className="num">
                       {delta == null ? "—" : p.id === "baseline" ? <span className="badge gray">base</span> : (
                         <span className={`badge ${delta < 0 ? "green" : "amber"}`}>{delta < 0 ? "" : "+"}{(delta * 100).toFixed(0)}%</span>
@@ -63,7 +68,8 @@ export function PortfolioCompare({
             </tbody>
           </table>
           <p className="muted" style={{ fontSize: "0.75rem", marginBottom: 0 }}>
-            Renda projetada para a carteira mais eficiente, com seu patrimônio-alvo: {money2(projections[0]?.projectedMonthly ?? 0)}/mês.
+            "Renda estimada/mês" = quanto cada carteira geraria com o SEU patrimônio projetado para a aposentadoria
+            (real, líquida de IR). Em verde, as que atingem a meta de {money2(target)}/mês.
           </p>
         </>
       ) : (
