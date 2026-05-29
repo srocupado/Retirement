@@ -195,7 +195,7 @@ export default function App() {
 
       <div className="section"><ResultsPanel c={computed} /></div>
       <div className="section"><IncomeVsTargetChart data={trajectory} targetNestEgg={computed.nestEggToday} /></div>
-      <div className="section"><PortfolioCompare projections={portfolios} compositions={compositions} target={scenario.targetMonthlyToday} /></div>
+      <div className="section"><PortfolioCompare projections={portfolios} compositions={compositions} target={scenario.targetMonthlyToday} monthlyContribution={scenario.monthlyContribution} /></div>
       <div className="section">
         <HoldingsTracker
           transactions={transactions}

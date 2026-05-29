@@ -6,10 +6,12 @@ export function PortfolioCompare({
   projections,
   compositions,
   target,
+  monthlyContribution,
 }: {
   projections: PortfolioProjection[];
   compositions: ModelComposition[];
   target: number;
+  monthlyContribution: number;
 }) {
   const [tab, setTab] = useState<"capital" | "composicao">("capital");
   const baseline = projections.find((p) => p.id === "baseline");
@@ -75,7 +77,8 @@ export function PortfolioCompare({
       ) : (
         <>
           <p className="muted" style={{ marginTop: 0, fontSize: "0.85rem" }}>
-            Sugestão ilustrativa de como montar cada carteira com <strong>ativos reais</strong> mais bem ranqueados no screening.
+            Sugestão ilustrativa de como montar cada carteira com <strong>ativos reais</strong> mais bem ranqueados no screening,
+            e como dividir o seu aporte de <strong>{money2(monthlyContribution)}/mês</strong> entre as classes.
             Produtos de balcão sem cotação pública (LCI/LCA/CRI/CRA/CDB/debêntures) aparecem como categoria — não inventamos nomes nem taxas.
           </p>
           <div className="grid cols-2">
@@ -86,6 +89,7 @@ export function PortfolioCompare({
                   <div key={s.sleeve} style={{ marginBottom: 8 }}>
                     <div style={{ fontSize: "0.82rem" }}>
                       <span className="badge blue">{(s.weight * 100).toFixed(0)}%</span>{" "}
+                      <span className="badge green">{money(s.weight * monthlyContribution)}/mês</span>{" "}
                       <span className="muted">{s.label}</span>
                     </div>
                     {s.examples.length > 0 ? (
