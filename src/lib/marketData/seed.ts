@@ -47,15 +47,15 @@ export const SEED_ASSETS: AssetSnapshot[] = [
   seed({ ticker: "BTC", name: "Bitcoin", kind: "cryptoDirect", family: "cripto", price: 550000, marketCap: 2_000_000_000_000, volatility: 0.55, avgDailyLiquidity: 1_000_000_000, dividendYield12m: 0 }),
   seed({ ticker: "ETH", name: "Ethereum", kind: "cryptoDirect", family: "cripto", price: 18000, marketCap: 450_000_000_000, volatility: 0.7, avgDailyLiquidity: 500_000_000, dividendYield12m: 0 }),
 
-  // ===================== Renda fixa (títulos/ofertas) =====================
+  // ===================== Renda fixa — Tesouro Direto (instrumentos REAIS) =====================
+  // Títulos públicos reais e nominados. As taxas são aproximadas (referência da
+  // data acima) e devem ser substituídas pelo feed do Tesouro Direto quando ativo.
+  // NÃO incluímos LCI/LCA/CDB/CRI/CRA/debêntures como ativos nomeados: são produtos
+  // de balcão, específicos de cada corretora/emissor e SEM ticker/cotação pública —
+  // representá-los com nomes/taxas inventados seria ficção. Eles entram nas
+  // carteiras-modelo como CATEGORIA (premissa editável), não como ativo sugerido.
   seed({ ticker: "TD-IPCA-2050", name: "Tesouro IPCA+ 2050", kind: "tesouroIpca", family: "rendaFixa", rate: 0.0695, rateKind: "ipcaPlus", maturity: "2050-05-15", fgc: false, rating: "soberano", dividendYield12m: 0 }),
   seed({ ticker: "TD-RENDA-2050", name: "Tesouro RendA+ 2050", kind: "rendaMais", family: "rendaFixa", rate: 0.072, rateKind: "ipcaPlus", maturity: "2050-12-15", fgc: false, rating: "soberano", dividendYield12m: 0 }),
   seed({ ticker: "TD-SELIC-2029", name: "Tesouro Selic 2029", kind: "tesouroSelic", family: "rendaFixa", rate: 1.0, rateKind: "cdiPercent", maturity: "2029-03-01", fgc: false, rating: "soberano", dividendYield12m: 0 }),
   seed({ ticker: "TD-PRE-2031", name: "Tesouro Prefixado 2031", kind: "tesouroPre", family: "rendaFixa", rate: 0.135, rateKind: "prefixado", maturity: "2031-01-01", fgc: false, rating: "soberano", dividendYield12m: 0 }),
-  seed({ ticker: "LCI-90CDI", name: "LCI 90% CDI (banco médio)", kind: "lci", family: "rendaFixa", rate: 0.9, rateKind: "cdiPercent", maturity: "2028-06-01", fgc: true, rating: "A", dividendYield12m: 0 }),
-  seed({ ticker: "LCA-IPCA5", name: "LCA IPCA+ 5% (banco grande)", kind: "lca", family: "rendaFixa", rate: 0.05, rateKind: "ipcaPlus", maturity: "2030-01-01", fgc: true, rating: "AAA", dividendYield12m: 0 }),
-  seed({ ticker: "CDB-110CDI", name: "CDB 110% CDI (banco médio)", kind: "cdb", family: "rendaFixa", rate: 1.1, rateKind: "cdiPercent", maturity: "2029-01-01", fgc: true, rating: "A", dividendYield12m: 0 }),
-  seed({ ticker: "DEB-INC-IPCA7", name: "Debênture incentivada IPCA+ 7% (infra)", kind: "debentureIncentivada", family: "rendaFixa", rate: 0.07, rateKind: "ipcaPlus", maturity: "2035-01-01", fgc: false, rating: "AA", dividendYield12m: 0 }),
-  seed({ ticker: "CRI-IPCA8", name: "CRI IPCA+ 8%", kind: "cri", family: "rendaFixa", rate: 0.08, rateKind: "ipcaPlus", maturity: "2034-01-01", fgc: false, rating: "A", dividendYield12m: 0 }),
-  seed({ ticker: "CRA-IPCA75", name: "CRA IPCA+ 7,5%", kind: "cra", family: "rendaFixa", rate: 0.075, rateKind: "ipcaPlus", maturity: "2033-01-01", fgc: false, rating: "A", dividendYield12m: 0 }),
 ];

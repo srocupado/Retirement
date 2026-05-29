@@ -14,18 +14,18 @@ import {
   type DataMode,
 } from "./lib/marketData";
 import { screenAll, topByFamily, type ScreenResult } from "./lib/screener";
-import { projectAllModels } from "./lib/portfolio";
+import { projectAllModels, composeAllModels, MODEL_PORTFOLIOS, type Transaction } from "./lib/portfolio";
 import { runAdvisor, DEFAULT_MODEL, type AdvisorContext, type AdvisorOutput } from "./lib/advisor";
 
 import { PlannerForm } from "./components/PlannerForm";
 import { ResultsPanel, type Computed } from "./components/ResultsPanel";
 import { IncomeVsTargetChart } from "./components/IncomeVsTargetChart";
 import { PortfolioCompare } from "./components/PortfolioCompare";
+import { HoldingsTracker } from "./components/HoldingsTracker";
 import { ScreenerTable } from "./components/ScreenerTable";
 import { RatesWidget } from "./components/RatesWidget";
 import { ApiKeySettings } from "./components/ApiKeySettings";
 import { AdvisorPanel } from "./components/AdvisorPanel";
-import { Disclaimers } from "./components/Disclaimers";
 
 const ls = {
   get: (k: string, d = "") => { try { return localStorage.getItem(k) ?? d; } catch { return d; } },
@@ -112,6 +112,15 @@ export default function App() {
     () => projectAllModels(scenario.targetMonthlyToday, computed.projectedNetReal, { inflation: scenario.inflation }),
     [scenario.targetMonthlyToday, scenario.inflation, computed.projectedNetReal],
   );
+  const compositions = useMemo(() => composeAllModels(MODEL_PORTFOLIOS, screenResults), [screenResults]);
+
+  // ---- minha carteira (lançamentos) ----
+  const [transactions, setTransactions] = useState<Transaction[]>(() => {
+    try { return JSON.parse(ls.get("rp.holdings.v1", "[]")) as Transaction[]; } catch { return []; }
+  });
+  const [targetModelId, setTargetModelId] = useState(ls.get("rp.targetModel", "renda") || "renda");
+  useEffect(() => { ls.set("rp.holdings.v1", JSON.stringify(transactions)); }, [transactions]);
+  useEffect(() => { ls.set("rp.targetModel", targetModelId); }, [targetModelId]);
 
   // ---- consultor de IA ----
   const [apiKey, setApiKey] = useState(ls.get("rp.apiKey"));
@@ -162,8 +171,6 @@ export default function App() {
         <p>Quanto você precisa para viver de renda — líquida de impostos e protegida da inflação — para sempre.</p>
       </header>
 
-      <Disclaimers />
-
       <div className="grid cols-2 section">
         <PlannerForm scenario={scenario} onChange={onChange} />
         <RatesWidget rates={rates} mode={mode} onMode={setMode} brapiToken={brapiToken} onBrapiToken={setBrapiToken} onRefresh={refreshData} loading={loadingData} />
@@ -171,7 +178,18 @@ export default function App() {
 
       <div className="section"><ResultsPanel c={computed} /></div>
       <div className="section"><IncomeVsTargetChart data={trajectory} targetNestEgg={computed.nestEggToday} /></div>
-      <div className="section"><PortfolioCompare projections={portfolios} target={scenario.targetMonthlyToday} /></div>
+      <div className="section"><PortfolioCompare projections={portfolios} compositions={compositions} target={scenario.targetMonthlyToday} /></div>
+      <div className="section">
+        <HoldingsTracker
+          transactions={transactions}
+          setTransactions={setTransactions}
+          assets={assets}
+          rates={rates}
+          inflation={scenario.inflation}
+          targetModelId={targetModelId}
+          setTargetModelId={setTargetModelId}
+        />
+      </div>
       <div className="section"><ScreenerTable results={screenResults} assets={assets} /></div>
 
       <div className="grid cols-2 section">

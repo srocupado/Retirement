@@ -27,9 +27,9 @@ describe("screenAll", () => {
     expect(btc.flags.some((f) => f.toLowerCase().includes("alto risco"))).toBe(true);
   });
 
-  it("isentos com bom rating pontuam alto (debênture incentivada)", () => {
-    const deb = byTicker("DEB-INC-IPCA7");
-    expect(deb.composite!).toBeGreaterThan(50);
+  it("título público real (Tesouro IPCA+ 2050) é pontuado e tem rating soberano", () => {
+    const td = byTicker("TD-IPCA-2050");
+    expect(td.composite!).toBeGreaterThan(50);
   });
 
   it("topByFamily devolve os melhores FIIs ordenados", () => {
