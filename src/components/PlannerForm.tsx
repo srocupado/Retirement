@@ -1,4 +1,5 @@
 import type { Scenario } from "../types";
+import { realNetYield } from "../lib/finance";
 
 interface Props {
   scenario: Scenario;
@@ -35,6 +36,9 @@ function NumField({ label, value, onChange, hint, step, percent }: NumFieldProps
 }
 
 export function PlannerForm({ scenario, onChange }: Props) {
+  // Mostra ao vivo quanto da taxa bruta sobra para sacar (após IR sobre o ganho nominal),
+  // para o usuário não precisar deduzir: rendimento real líquido = i·(1−t) − π·t.
+  const netDecum = realNetYield(scenario.decumulationRealRate, scenario.inflation, scenario.taxRate);
   return (
     <div className="panel">
       <h2>Seu plano</h2>
@@ -53,7 +57,7 @@ export function PlannerForm({ scenario, onChange }: Props) {
         <NumField label="Taxa real acumulação a.a." value={scenario.realRate} onChange={(v) => onChange({ realRate: v })} percent hint="ex.: IPCA+ 6,5%" />
       </div>
       <div className="row">
-        <NumField label="Taxa real na renda (i_dec) a.a." value={scenario.decumulationRealRate} onChange={(v) => onChange({ decumulationRealRate: v })} percent hint="reinvestimento em 2050" />
+        <NumField label="Taxa real na renda (bruta) a.a." value={scenario.decumulationRealRate} onChange={(v) => onChange({ decumulationRealRate: v })} percent hint={`retorno bruto na aposentadoria → ≈ ${(netDecum * 100).toFixed(1)}% líq./ano é o que você saca`} />
         <NumField label="IR efetivo no resgate" value={scenario.taxRate} onChange={(v) => onChange({ taxRate: v })} percent hint="15% p/ >720 dias" />
       </div>
     </div>
