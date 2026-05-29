@@ -4,7 +4,7 @@ name: Deploy to GitHub Pages
 # Pré-requisito: em Settings → Pages, definir "Source" como "GitHub Actions".
 on:
   push:
-    branches: [main, master]
+    branches: [main, master, claude/retirement-strategy-2050-LKnwA]
   workflow_dispatch:
 
 permissions:
