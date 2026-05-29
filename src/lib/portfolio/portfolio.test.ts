@@ -5,6 +5,7 @@ import {
   projectAllModels,
   validateAllocation,
   DEFAULT_GLOBAL,
+  DEFAULT_SLEEVES,
   rendaMaisMonthlyPayment,
 } from "./index";
 
@@ -23,6 +24,18 @@ describe("projectPortfolio", () => {
     const baseline = all.find((p) => p.id === "baseline")!;
     const renda = all.find((p) => p.id === "renda")!;
     expect(renda.requiredNestEgg).toBeLessThan(baseline.requiredNestEgg);
+  });
+
+  it("baseline 100% IPCA+ usa a taxa de decumulação informada (bate com a renda atingível)", () => {
+    const decumRate = 0.06, infl = 0.04, tax = 0.15, nestEgg = 2_635_776;
+    const sleeves = {
+      ...DEFAULT_SLEEVES,
+      ipcaIncome: { ...DEFAULT_SLEEVES.ipcaIncome, realRate: decumRate, taxRate: tax },
+    };
+    const all = projectAllModels(target, nestEgg, { inflation: infl }, MODEL_PORTFOLIOS, sleeves);
+    const baseline = all.find((p) => p.id === "baseline")!;
+    const expected = (nestEgg * (decumRate * (1 - tax) - infl * tax)) / 12;
+    expect(baseline.projectedMonthly).toBeCloseTo(expected, 2);
   });
 
   it("o breakdown soma o yield ponderado da carteira", () => {

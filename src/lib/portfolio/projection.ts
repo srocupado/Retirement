@@ -67,8 +67,9 @@ export function projectAllModels(
   nestEgg: number,
   g: GlobalAssumptions,
   models: ModelPortfolio[] = MODEL_PORTFOLIOS,
+  sleeves: Record<SleeveKey, SleeveAssumption> = DEFAULT_SLEEVES,
 ): PortfolioProjection[] {
   return models
-    .map((m) => projectPortfolio(m, targetMonthlyToday, nestEgg, g))
+    .map((m) => projectPortfolio(m, targetMonthlyToday, nestEgg, g, sleeves))
     .sort((a, b) => a.requiredNestEgg - b.requiredNestEgg);
 }

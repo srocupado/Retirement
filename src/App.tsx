@@ -17,7 +17,7 @@ import {
   type BrapiValidation,
 } from "./lib/marketData";
 import { screenAll, topByFamily, type ScreenResult } from "./lib/screener";
-import { projectAllModels, composeAllModels, MODEL_PORTFOLIOS, type Transaction } from "./lib/portfolio";
+import { projectAllModels, composeAllModels, MODEL_PORTFOLIOS, DEFAULT_SLEEVES, type Transaction } from "./lib/portfolio";
 import { runAdvisor, DEFAULT_MODEL, type AdvisorContext, type AdvisorOutput } from "./lib/advisor";
 
 import { PlannerForm } from "./components/PlannerForm";
@@ -125,9 +125,19 @@ export default function App() {
 
   // ---- screening + carteiras ----
   const screenResults: ScreenResult[] = useMemo(() => (assets.length ? screenAll(assets) : []), [assets]);
+  // Alinha o bloco IPCA+ das carteiras à taxa de decumulação e ao IR que o
+  // usuário define no planejador — assim o baseline (100% IPCA+) bate exatamente
+  // com a "renda mensal atingível" do card de resultados.
+  const sleeves = useMemo(
+    () => ({
+      ...DEFAULT_SLEEVES,
+      ipcaIncome: { ...DEFAULT_SLEEVES.ipcaIncome, realRate: scenario.decumulationRealRate, taxRate: scenario.taxRate },
+    }),
+    [scenario.decumulationRealRate, scenario.taxRate],
+  );
   const portfolios = useMemo(
-    () => projectAllModels(scenario.targetMonthlyToday, computed.projectedNetReal, { inflation: scenario.inflation }),
-    [scenario.targetMonthlyToday, scenario.inflation, computed.projectedNetReal],
+    () => projectAllModels(scenario.targetMonthlyToday, computed.projectedNetReal, { inflation: scenario.inflation }, MODEL_PORTFOLIOS, sleeves),
+    [scenario.targetMonthlyToday, scenario.inflation, computed.projectedNetReal, sleeves],
   );
   const compositions = useMemo(() => composeAllModels(MODEL_PORTFOLIOS, screenResults), [screenResults]);
 
