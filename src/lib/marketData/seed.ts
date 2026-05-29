@@ -58,4 +58,12 @@ export const SEED_ASSETS: AssetSnapshot[] = [
   seed({ ticker: "TD-RENDA-2050", name: "Tesouro RendA+ 2050", kind: "rendaMais", family: "rendaFixa", rate: 0.072, rateKind: "ipcaPlus", maturity: "2050-12-15", fgc: false, rating: "soberano", dividendYield12m: 0 }),
   seed({ ticker: "TD-SELIC-2029", name: "Tesouro Selic 2029", kind: "tesouroSelic", family: "rendaFixa", rate: 1.0, rateKind: "cdiPercent", maturity: "2029-03-01", fgc: false, rating: "soberano", dividendYield12m: 0 }),
   seed({ ticker: "TD-PRE-2031", name: "Tesouro Prefixado 2031", kind: "tesouroPre", family: "rendaFixa", rate: 0.135, rateKind: "prefixado", maturity: "2031-01-01", fgc: false, rating: "soberano", dividendYield12m: 0 }),
+
+  // ===================== Renda fixa ISENTA listada (FI-Infra) — instrumentos REAIS =====================
+  // Fundos Incentivados de Investimento em Infraestrutura (Lei 12.431): listados na B3,
+  // com ticker e cotação públicos; para PF, rendimentos E ganho de capital são ISENTOS.
+  // A taxa (IPCA+) é o carrego indicativo da carteira (aproximado; o preço atualiza ao vivo).
+  seed({ ticker: "KDIF11", name: "Kinea Infra (FI-Infra)", kind: "fiInfra", family: "rendaFixa", price: 105, rate: 0.075, rateKind: "ipcaPlus", fgc: false, rating: "AA", dividendYield12m: 0.123, avgDailyLiquidity: 3_000_000 }),
+  seed({ ticker: "JURO11", name: "Sparta Infra (FI-Infra)", kind: "fiInfra", family: "rendaFixa", price: 9.6, rate: 0.08, rateKind: "ipcaPlus", fgc: false, rating: "A", dividendYield12m: 0.13, avgDailyLiquidity: 5_000_000 }),
+  seed({ ticker: "CPTI11", name: "Capitânia Infra (FI-Infra)", kind: "fiInfra", family: "rendaFixa", price: 8.7, rate: 0.078, rateKind: "ipcaPlus", fgc: false, rating: "A", dividendYield12m: 0.125, avgDailyLiquidity: 4_000_000 }),
 ];

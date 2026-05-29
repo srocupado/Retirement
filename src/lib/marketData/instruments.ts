@@ -16,6 +16,7 @@ export type InstrumentKind =
   | "cri"
   | "cra"
   | "fundoDI"
+  | "fiInfra"
   // Renda variável
   | "fii"
   | "acaoDividendos"

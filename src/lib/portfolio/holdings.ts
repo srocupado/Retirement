@@ -61,6 +61,7 @@ export function kindToSleeve(kind: InstrumentKind): SleeveKey {
     case "cri":
     case "cra":
     case "debentureIncentivada":
+    case "fiInfra":
       return "isentos";
     case "fii":
     case "acaoDividendos":

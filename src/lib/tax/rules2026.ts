@@ -74,6 +74,7 @@ export const RULES_2026: Record<InstrumentKind, KindRule> = {
   debentureIncentivada: { incomeExempt: true, incomeTaxRateLongTerm: 0, capitalGainsRate: 0, fgc: false, legalBasis: "Lei 12.431/2011 (isenta inclusive ganho de capital)" },
   cri: { incomeExempt: true, incomeTaxRateLongTerm: 0, capitalGainsRate: 0, fgc: false, legalBasis: "Lei 9.514/1997" },
   cra: { incomeExempt: true, incomeTaxRateLongTerm: 0, capitalGainsRate: 0, fgc: false, legalBasis: "Lei 11.076/2004" },
+  fiInfra: { incomeExempt: true, incomeTaxRateLongTerm: 0, capitalGainsRate: 0, fgc: false, legalBasis: "FI-Infra (Lei 12.431): rendimentos E ganho de capital isentos para PF" },
 
   // --- Renda variável ---
   fii: { incomeExempt: true, incomeTaxRateLongTerm: 0, capitalGainsRate: 0.2, fgc: false, legalBasis: "Lei 11.196/2005 (rendimentos isentos; ganho de capital 20%)" },

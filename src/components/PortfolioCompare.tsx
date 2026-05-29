@@ -92,7 +92,7 @@ export function PortfolioCompare({
                       </div>
                     ) : (
                       <div className="muted" style={{ fontSize: "0.74rem", marginTop: 2 }}>
-                        Sem ticker público — produto de corretora (taxa varia). Categoria/premissa.
+                        Alocação por categoria — escolha a oferta na sua corretora.
                       </div>
                     )}
                   </div>

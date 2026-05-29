@@ -33,6 +33,7 @@ const KIND_LABELS: Record<InstrumentKind, string> = {
   cri: "CRI (isento)",
   cra: "CRA (isento)",
   fundoDI: "Fundo DI",
+  fiInfra: "FI-Infra (fundo de infraestrutura, isento)",
 };
 
 const KIND_ORDER = Object.keys(KIND_LABELS) as InstrumentKind[];

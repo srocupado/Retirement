@@ -70,4 +70,16 @@ describe("composeModel", () => {
     expect(fiiSleeve!.examples.length).toBeGreaterThan(0);
     expect(fiiSleeve!.examples[0].ticker).toBeTruthy();
   });
+
+  it("o bloco 'isentos' é preenchido com ativos reais (FI-Infra), não com texto genérico", () => {
+    const results = screenAll(SEED_ASSETS);
+    const comp = composeModel(MODEL_PORTFOLIOS.find((m) => m.id === "renda")!, results);
+    const isentos = comp.sleeves.find((s) => s.sleeve === "isentos")!;
+    expect(isentos.examples.length).toBeGreaterThan(0);
+    expect(isentos.examples.map((e) => e.ticker)).toContain("KDIF11");
+  });
+
+  it("FI-Infra é isento inclusive no ganho de capital", () => {
+    expect(kindToSleeve("fiInfra")).toBe("isentos");
+  });
 });

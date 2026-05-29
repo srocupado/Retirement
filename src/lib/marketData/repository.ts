@@ -37,7 +37,10 @@ function fresh<T>(c: Cached<T> | null): boolean {
 
 /** Tickers de bolsa/cripto que o brapi consegue atualizar. */
 function liveTickers(): { equities: string[]; crypto: string[] } {
-  const equities = SEED_ASSETS.filter((a) => ["fii", "acao", "etf"].includes(a.family)).map((a) => a.ticker);
+  // FI-Infra são listados na B3 (família rendaFixa, mas com ticker/cotação públicos).
+  const equities = SEED_ASSETS.filter(
+    (a) => ["fii", "acao", "etf"].includes(a.family) || a.kind === "fiInfra",
+  ).map((a) => a.ticker);
   const crypto = SEED_ASSETS.filter((a) => a.kind === "cryptoDirect").map((a) => a.ticker);
   return { equities, crypto };
 }
