@@ -28,27 +28,64 @@ export async function runAdvisor(
 
   const response = await client.messages.create({
     model,
-    max_tokens: 1500,
+    // Folga suficiente para o JSON completo; 1500 truncava arrays e quebrava o parse.
+    max_tokens: 4096,
     system,
     messages: [{ role: "user", content: buildUserMessage(ctx) }],
+    // Saída estruturada via tool use: a API garante um objeto JSON no campo `input`,
+    // sem precisar parsear texto/cercas de markdown (origem do bug anterior).
+    tools: [ADVISOR_TOOL],
+    tool_choice: { type: "tool", name: ADVISOR_TOOL.name },
   });
 
-  const text = response.content
-    .filter((b): b is Anthropic.TextBlock => b.type === "text")
-    .map((b) => b.text)
-    .join("");
+  if (response.stop_reason === "max_tokens") {
+    throw new Error("A resposta da IA foi cortada por limite de tokens. Tente novamente.");
+  }
 
-  const json = extractJson(text);
-  const parsed = AdvisorOutputSchema.parse(json);
+  const toolUse = response.content.find(
+    (b): b is Anthropic.ToolUseBlock => b.type === "tool_use" && b.name === ADVISOR_TOOL.name,
+  );
+  if (!toolUse) throw new Error("A IA não retornou a análise estruturada esperada.");
+
+  const parsed = AdvisorOutputSchema.parse(toolUse.input);
   return enforceGrounding(parsed, allowedTickers(ctx));
 }
 
-/** Extrai o primeiro objeto JSON do texto (tolerante a cercas de código). */
-function extractJson(text: string): unknown {
-  const fenced = text.match(/```(?:json)?\s*([\s\S]*?)```/);
-  const candidate = fenced ? fenced[1] : text;
-  const start = candidate.indexOf("{");
-  const end = candidate.lastIndexOf("}");
-  if (start === -1 || end === -1) throw new Error("A IA não retornou um JSON válido.");
-  return JSON.parse(candidate.slice(start, end + 1));
-}
+/** Ferramenta de saída estruturada (espelha o AdvisorOutputSchema). */
+const ADVISOR_TOOL: Anthropic.Tool = {
+  name: "submit_analysis",
+  description: "Registra a análise educacional do cenário de aposentadoria.",
+  input_schema: {
+    type: "object",
+    properties: {
+      evaluation: { type: "string", description: "Avaliação geral do cenário e do progresso rumo à meta." },
+      allocationAdjustments: {
+        type: "array",
+        items: {
+          type: "object",
+          properties: {
+            sleeve: { type: "string" },
+            action: { type: "string", enum: ["aumentar", "reduzir", "manter"] },
+            rationale: { type: "string" },
+          },
+          required: ["sleeve", "action", "rationale"],
+        },
+      },
+      candidateAssets: {
+        type: "array",
+        description: "APENAS tickers presentes em topAssets (anti-alucinação).",
+        items: {
+          type: "object",
+          properties: {
+            ticker: { type: "string" },
+            reason: { type: "string" },
+          },
+          required: ["ticker", "reason"],
+        },
+      },
+      caveats: { type: "array", items: { type: "string" } },
+      disclaimer: { type: "string" },
+    },
+    required: ["evaluation", "disclaimer"],
+  },
+};
