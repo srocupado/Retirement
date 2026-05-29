@@ -42,6 +42,36 @@ export async function fetchQuotes(
   return out;
 }
 
+export interface BrapiValidation {
+  valid: boolean;
+  message: string;
+}
+
+/**
+ * Valida o token fazendo uma cotação de teste (PETR4) e classifica o resultado:
+ * token OK (com preço), inválido/sem permissão (401/403), limite (429), ou
+ * falha de rede/CORS. Dá feedback imediato ao usuário sobre a chave colada.
+ */
+export async function validateBrapiToken(token: string): Promise<BrapiValidation> {
+  try {
+    const url = new URL(`${BASE}/quote/PETR4`);
+    if (token) url.searchParams.set("token", token);
+    const res = await fetch(url.toString());
+    if (res.status === 401 || res.status === 403)
+      return { valid: false, message: `Token inválido ou sem permissão (HTTP ${res.status}).` };
+    if (res.status === 429)
+      return { valid: false, message: "Limite de requisições atingido (HTTP 429). Tente mais tarde." };
+    if (!res.ok) return { valid: false, message: `Falha na brapi (HTTP ${res.status}).` };
+    const json: { results?: BrapiQuote[] } = await res.json();
+    const price = json.results?.[0]?.regularMarketPrice;
+    if (price == null)
+      return { valid: false, message: "Resposta sem cotação — o token pode não ter acesso a esse recurso." };
+    return { valid: true, message: `Token OK — PETR4 a R$ ${price.toFixed(2)}.` };
+  } catch {
+    return { valid: false, message: "Não foi possível conectar à brapi (rede/CORS)." };
+  }
+}
+
 /** Cotação de cripto (BTC/ETH) em BRL. */
 export async function fetchCrypto(
   coins: string[],

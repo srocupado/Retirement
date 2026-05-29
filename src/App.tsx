@@ -9,9 +9,12 @@ import {
 import {
   loadAssets,
   loadRates,
+  validateBrapiToken,
   type AssetSnapshot,
   type MarketRates,
   type DataMode,
+  type LiveFetchStatus,
+  type BrapiValidation,
 } from "./lib/marketData";
 import { screenAll, topByFamily, type ScreenResult } from "./lib/screener";
 import { projectAllModels, composeAllModels, MODEL_PORTFOLIOS, type Transaction } from "./lib/portfolio";
@@ -43,15 +46,29 @@ export default function App() {
   const [assets, setAssets] = useState<AssetSnapshot[]>([]);
   const [rates, setRates] = useState<MarketRates | null>(null);
   const [loadingData, setLoadingData] = useState(false);
+  const [dataStatus, setDataStatus] = useState<LiveFetchStatus | null>(null);
+  const [tokenCheck, setTokenCheck] = useState<BrapiValidation | null>(null);
+  const [checkingToken, setCheckingToken] = useState(false);
 
   async function refreshData() {
     setLoadingData(true);
     try {
       const [a, r] = await Promise.all([loadAssets(mode, brapiToken), loadRates(mode)]);
-      setAssets(a);
+      setAssets(a.assets);
+      setDataStatus(a.status);
       setRates(r);
     } finally {
       setLoadingData(false);
+    }
+  }
+
+  async function validateToken() {
+    setCheckingToken(true);
+    setTokenCheck(null);
+    try {
+      setTokenCheck(await validateBrapiToken(brapiToken));
+    } finally {
+      setCheckingToken(false);
     }
   }
   useEffect(() => { refreshData(); /* eslint-disable-next-line */ }, []);
@@ -173,7 +190,7 @@ export default function App() {
 
       <div className="grid cols-2 section">
         <PlannerForm scenario={scenario} onChange={onChange} />
-        <RatesWidget rates={rates} mode={mode} onMode={setMode} brapiToken={brapiToken} onBrapiToken={setBrapiToken} onRefresh={refreshData} loading={loadingData} />
+        <RatesWidget rates={rates} mode={mode} onMode={setMode} brapiToken={brapiToken} onBrapiToken={setBrapiToken} onRefresh={refreshData} loading={loadingData} status={dataStatus} onValidate={validateToken} checkingToken={checkingToken} tokenCheck={tokenCheck} />
       </div>
 
       <div className="section"><ResultsPanel c={computed} /></div>
