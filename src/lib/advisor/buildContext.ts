@@ -10,6 +10,16 @@ export interface PlannerScenario {
   realRate: number;
 }
 
+/** Resumo da carteira REAL do usuário (lançamentos consolidados). */
+export interface RealPortfolioSummary {
+  totalValue: number;
+  monthlyNetIncome: number;
+  positions: { ticker: string; sleeve: string; weight: number; marketValue: number }[];
+  /** Desvios da alocação real vs a carteira-modelo alvo (real − alvo). */
+  deltasVsTarget: { sleeve: string; real: number; target: number; delta: number }[];
+  targetModel: string;
+}
+
 export interface AdvisorContext {
   scenario: PlannerScenario;
   nestEgg: { today: number; feasible: boolean; realNetYield: number };
@@ -17,11 +27,15 @@ export interface AdvisorContext {
   portfolios: PortfolioProjection[];
   topAssets: { ticker: string; name: string; family: string; composite: number | null; flags: string[] }[];
   rates: MarketRates;
+  /** Carteira real do usuário, quando há lançamentos. */
+  realPortfolio?: RealPortfolioSummary | null;
 }
 
 /** Lista de tickers permitidos para o grounding do consultor. */
 export function allowedTickers(ctx: AdvisorContext): string[] {
-  return ctx.topAssets.map((a) => a.ticker);
+  const fromScreen = ctx.topAssets.map((a) => a.ticker);
+  const fromHoldings = ctx.realPortfolio?.positions.map((p) => p.ticker) ?? [];
+  return [...new Set([...fromScreen, ...fromHoldings])];
 }
 
 /** Mensagem do usuário: contexto compacto em JSON. */
@@ -39,6 +53,7 @@ export function buildUserMessage(ctx: AdvisorContext): string {
   "caveats": string[],
   "disclaimer": string
 }`,
-    "Lembre-se: candidateAssets só pode conter tickers presentes em topAssets.",
+    "Lembre-se: candidateAssets só pode conter tickers presentes em topAssets ou na carteira real.",
+    "Se 'realPortfolio' estiver presente, priorize avaliar a carteira REAL do usuário: comente os desvios em deltasVsTarget (real − alvo, por sleeve) e o que os próximos aportes devem priorizar.",
   ].join("\n");
 }

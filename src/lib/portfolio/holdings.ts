@@ -2,7 +2,7 @@ import type { AssetSnapshot, AssetFamily, InstrumentKind } from "../marketData/i
 import type { MarketRates } from "../marketData";
 import { realNetYield } from "../finance/perpetuity";
 import { effectiveIncomeTaxRate, capitalGainsRate } from "../tax";
-import { DEFAULT_SLEEVES, type SleeveKey } from "./assumptions";
+import { DEFAULT_SLEEVES, type SleeveKey, type SleeveAssumption } from "./assumptions";
 import type { Allocation, ModelPortfolio } from "./models";
 
 /** Um lançamento (compra/venda) que o usuário registra ao longo do tempo. */
@@ -152,6 +152,7 @@ export function positionRealNetYield(
   kind: InstrumentKind,
   rates: MarketRates,
   inflation: number,
+  sleeves: Record<SleeveKey, SleeveAssumption> = DEFAULT_SLEEVES,
 ): number {
   const family = asset?.family ?? familyOfKind(kind);
   const t = effectiveIncomeTaxRate(kind);
@@ -161,16 +162,18 @@ export function positionRealNetYield(
     return Math.max(0, (asset?.dividendYield12m ?? 0) * (1 - t));
   }
   if (family === "etf") {
-    return Math.max(0, (DEFAULT_SLEEVES.etfGrowth.realReturn ?? 0.07) * (1 - capitalGainsRate(kind)));
+    return Math.max(0, (sleeves.etfGrowth.realReturn ?? 0.07) * (1 - capitalGainsRate(kind)));
   }
   if (family === "cripto") return 0;
 
-  // Renda fixa
+  // Renda fixa — fallback usa a MESMA premissa do planejador (sleeves do usuário),
+  // para a renda da carteira real nunca divergir do card de carteiras.
+  const fallbackReal = sleeves.ipcaIncome.realRate ?? 0.06;
   if (asset?.rateKind === "ipcaPlus" || kind === "rendaMais" || kind === "educaMais") {
-    return realNetYield(asset?.rate ?? DEFAULT_SLEEVES.ipcaIncome.realRate ?? 0.06, inflation, t);
+    return realNetYield(asset?.rate ?? fallbackReal, inflation, t);
   }
   const nominal = asset ? nominalRate(asset, rates) : null;
-  if (nominal == null) return Math.max(0, realNetYield(0.06, inflation, t));
+  if (nominal == null) return Math.max(0, realNetYield(fallbackReal, inflation, t));
   return Math.max(0, nominal * (1 - t) - inflation);
 }
 
@@ -180,6 +183,7 @@ export function buildRealPortfolio(
   assets: AssetSnapshot[],
   rates: MarketRates,
   inflation: number,
+  sleeves: Record<SleeveKey, SleeveAssumption> = DEFAULT_SLEEVES,
 ): RealPortfolio {
   const byTicker = new Map(assets.map((a) => [a.ticker.toUpperCase(), a]));
   const positions = aggregate(transactions);
@@ -189,7 +193,7 @@ export function buildRealPortfolio(
     const currentPrice = asset?.price ?? p.avgPrice;
     const marketValue = p.quantity * currentPrice;
     const sleeve = kindToSleeve(p.kind);
-    const y = positionRealNetYield(asset, p.kind, rates, inflation);
+    const y = positionRealNetYield(asset, p.kind, rates, inflation, sleeves);
     return {
       ...p,
       name: asset?.name ?? p.ticker,

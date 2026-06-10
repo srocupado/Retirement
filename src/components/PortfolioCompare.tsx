@@ -2,13 +2,15 @@ import { useState } from "react";
 import type { PortfolioProjection, ModelComposition } from "../lib/portfolio";
 import { money, money2, pct } from "../format";
 
+type ProjectionWithContrib = PortfolioProjection & { requiredMonthlyContribution?: number };
+
 export function PortfolioCompare({
   projections,
   compositions,
   target,
   monthlyContribution,
 }: {
-  projections: PortfolioProjection[];
+  projections: ProjectionWithContrib[];
   compositions: ModelComposition[];
   target: number;
   monthlyContribution: number;
@@ -36,6 +38,7 @@ export function PortfolioCompare({
                 <th>Carteira</th>
                 <th className="num">Rend. real líquido</th>
                 <th className="num">Patrimônio necessário</th>
+                <th className="num">Aporte p/ meta</th>
                 <th className="num">Renda estimada/mês</th>
                 <th className="num">vs baseline</th>
               </tr>
@@ -46,6 +49,7 @@ export function PortfolioCompare({
                   ? p.requiredNestEgg / baseline.requiredNestEgg - 1
                   : null;
                 const meetsTarget = p.projectedMonthly >= target;
+                const contribOk = p.requiredMonthlyContribution != null && p.requiredMonthlyContribution <= monthlyContribution;
                 return (
                   <tr key={p.id}>
                     <td>
@@ -56,6 +60,9 @@ export function PortfolioCompare({
                     </td>
                     <td className="num">{pct(p.blendedSpendableYield)}</td>
                     <td className="num">{money(p.requiredNestEgg)}</td>
+                    <td className="num" style={{ color: contribOk ? "var(--accent)" : undefined }} title={contribOk ? "Seu aporte atual já cobre" : "Acima do seu aporte atual"}>
+                      {p.requiredMonthlyContribution == null ? "—" : money(p.requiredMonthlyContribution)}<span className="muted" style={{ fontSize: "0.72rem" }}>/mês</span>
+                    </td>
                     <td className="num" style={{ color: meetsTarget ? "var(--accent)" : undefined }} title={meetsTarget ? "Atinge a meta" : "Abaixo da meta"}>
                       {money2(p.projectedMonthly)}
                     </td>
@@ -70,8 +77,9 @@ export function PortfolioCompare({
             </tbody>
           </table>
           <p className="muted" style={{ fontSize: "0.75rem", marginBottom: 0 }}>
-            "Renda estimada/mês" = quanto cada carteira geraria com o SEU patrimônio projetado para a aposentadoria
-            (real, líquida de IR). Em verde, as que atingem a meta de {money2(target)}/mês.
+            "Aporte p/ meta" = aporte mensal necessário para acumular o patrimônio que cada carteira exige (verde: seu
+            aporte de {money(monthlyContribution)} já cobre). "Renda estimada/mês" = quanto cada carteira geraria com o
+            SEU patrimônio projetado (real, líquida de IR; verde: atinge a meta de {money2(target)}/mês).
           </p>
         </>
       ) : (

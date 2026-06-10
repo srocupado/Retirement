@@ -17,8 +17,18 @@ import {
   type BrapiValidation,
 } from "./lib/marketData";
 import { screenAll, topByFamily, type ScreenResult } from "./lib/screener";
-import { projectAllModels, composeAllModels, MODEL_PORTFOLIOS, DEFAULT_SLEEVES, type Transaction } from "./lib/portfolio";
+import {
+  projectAllModels,
+  composeAllModels,
+  buildRealPortfolio,
+  compareToModel,
+  routeContribution,
+  MODEL_PORTFOLIOS,
+  DEFAULT_SLEEVES,
+  type Transaction,
+} from "./lib/portfolio";
 import { runAdvisor, DEFAULT_MODEL, type AdvisorContext, type AdvisorOutput } from "./lib/advisor";
+import { SensitivityChart } from "./components/SensitivityChart";
 
 import { PlannerForm } from "./components/PlannerForm";
 import { ResultsPanel, type Computed } from "./components/ResultsPanel";
@@ -139,6 +149,23 @@ export default function App() {
     () => projectAllModels(scenario.targetMonthlyToday, computed.projectedNetReal, { inflation: scenario.inflation }, MODEL_PORTFOLIOS, sleeves),
     [scenario.targetMonthlyToday, scenario.inflation, computed.projectedNetReal, sleeves],
   );
+  // Aporte mensal necessário para acumular o patrimônio que CADA carteira exige.
+  const portfoliosWithContrib = useMemo(
+    () =>
+      portfolios.map((p) => ({
+        ...p,
+        requiredMonthlyContribution: isFinite(p.requiredNestEgg)
+          ? requiredContribution(p.requiredNestEgg, {
+              currentSavings: scenario.currentSavings,
+              realRate: scenario.realRate,
+              inflation: scenario.inflation,
+              years: scenario.yearsToRetirement,
+              taxRate: scenario.taxRate,
+            })
+          : Infinity,
+      })),
+    [portfolios, scenario.currentSavings, scenario.realRate, scenario.inflation, scenario.yearsToRetirement, scenario.taxRate],
+  );
   const compositions = useMemo(() => composeAllModels(MODEL_PORTFOLIOS, screenResults), [screenResults]);
 
   // ---- minha carteira (lançamentos) ----
@@ -148,6 +175,22 @@ export default function App() {
   const [targetModelId, setTargetModelId] = useState(ls.get("rp.targetModel", "renda") || "renda");
   useEffect(() => { ls.set("rp.holdings.v1", JSON.stringify(transactions)); }, [transactions]);
   useEffect(() => { ls.set("rp.targetModel", targetModelId); }, [targetModelId]);
+
+  const effRates = useMemo<MarketRates>(
+    () => rates ?? { cdi: 0.1065, selic: 0.1075, ipca12m: scenario.inflation, asOf: "n/d", source: "n/d" },
+    [rates, scenario.inflation],
+  );
+  // Carteira real consolidada com as MESMAS premissas do planejador (sleeves).
+  const realPortfolio = useMemo(
+    () => buildRealPortfolio(transactions, assets, effRates, scenario.inflation, sleeves),
+    [transactions, assets, effRates, scenario.inflation, sleeves],
+  );
+  const targetModel = MODEL_PORTFOLIOS.find((m) => m.id === targetModelId) ?? MODEL_PORTFOLIOS[3];
+  // Roteiro do aporte do mês: converge a carteira real ao alvo só comprando.
+  const route = useMemo(
+    () => routeContribution(realPortfolio, targetModel, scenario.monthlyContribution, screenResults),
+    [realPortfolio, targetModel, scenario.monthlyContribution, screenResults],
+  );
 
   // ---- consultor de IA ----
   const [apiKey, setApiKey] = useState(ls.get("rp.apiKey"));
@@ -181,6 +224,15 @@ export default function App() {
         portfolios,
         topAssets: top,
         rates: rates ?? { cdi: null, selic: null, ipca12m: scenario.inflation, asOf: "n/d", source: "n/d" },
+        realPortfolio: realPortfolio.positions.length
+          ? {
+              totalValue: realPortfolio.totalValue,
+              monthlyNetIncome: realPortfolio.monthlyNetIncome,
+              positions: realPortfolio.positions.map((p) => ({ ticker: p.ticker, sleeve: p.sleeve, weight: p.weight, marketValue: p.marketValue })),
+              deltasVsTarget: compareToModel(realPortfolio.allocation, targetModel).map((c) => ({ sleeve: c.sleeve, real: c.realWeight, target: c.targetWeight, delta: c.delta })),
+              targetModel: targetModel.name,
+            }
+          : null,
       };
       const out = await runAdvisor(ctx, apiKey, model);
       setAdvisorOut(out);
@@ -204,17 +256,28 @@ export default function App() {
       </div>
 
       <div className="section"><ResultsPanel c={computed} /></div>
-      <div className="section"><IncomeVsTargetChart data={trajectory} targetNestEgg={computed.nestEggToday} /></div>
-      <div className="section"><PortfolioCompare projections={portfolios} compositions={compositions} target={scenario.targetMonthlyToday} monthlyContribution={scenario.monthlyContribution} /></div>
+      <div className="grid cols-2 section">
+        <IncomeVsTargetChart data={trajectory} targetNestEgg={computed.nestEggToday} />
+        <SensitivityChart
+          nestEgg={computed.projectedNetReal}
+          inflation={scenario.inflation}
+          taxRate={scenario.taxRate}
+          currentRate={scenario.decumulationRealRate}
+          target={scenario.targetMonthlyToday}
+        />
+      </div>
+      <div className="section"><PortfolioCompare projections={portfoliosWithContrib} compositions={compositions} target={scenario.targetMonthlyToday} monthlyContribution={scenario.monthlyContribution} /></div>
       <div className="section">
         <HoldingsTracker
           transactions={transactions}
           setTransactions={setTransactions}
           assets={assets}
-          rates={rates}
-          inflation={scenario.inflation}
+          portfolio={realPortfolio}
+          route={route}
           targetModelId={targetModelId}
           setTargetModelId={setTargetModelId}
+          currentSavings={scenario.currentSavings}
+          onUseAsSavings={() => onChange({ currentSavings: Math.round(realPortfolio.totalValue) })}
         />
       </div>
       <div className="section"><ScreenerTable results={screenResults} assets={assets} /></div>

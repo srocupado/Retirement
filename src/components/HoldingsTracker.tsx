@@ -1,11 +1,12 @@
 import { useMemo, useRef, useState } from "react";
-import type { AssetSnapshot, MarketRates } from "../lib/marketData";
+import type { AssetSnapshot } from "../lib/marketData";
 import type { InstrumentKind } from "../lib/marketData";
 import {
-  buildRealPortfolio,
   compareToModel,
   MODEL_PORTFOLIOS,
   type Transaction,
+  type RealPortfolio,
+  type ContributionRoute,
 } from "../lib/portfolio";
 import { money, money2, pct } from "../format";
 
@@ -51,29 +52,29 @@ export function HoldingsTracker({
   transactions,
   setTransactions,
   assets,
-  rates,
-  inflation,
+  portfolio,
+  route,
   targetModelId,
   setTargetModelId,
+  currentSavings,
+  onUseAsSavings,
 }: {
   transactions: Transaction[];
   setTransactions: (t: Transaction[]) => void;
   assets: AssetSnapshot[];
-  rates: MarketRates | null;
-  inflation: number;
+  portfolio: RealPortfolio;
+  route: ContributionRoute;
   targetModelId: string;
   setTargetModelId: (id: string) => void;
+  currentSavings: number;
+  onUseAsSavings: () => void;
 }) {
   const [form, setForm] = useState(emptyForm());
   const fileInput = useRef<HTMLInputElement>(null);
 
-  const effRates: MarketRates = rates ?? { cdi: 0.1065, selic: 0.1075, ipca12m: inflation, asOf: "n/d", source: "n/d" };
-  const portfolio = useMemo(
-    () => buildRealPortfolio(transactions, assets, effRates, inflation),
-    [transactions, assets, effRates, inflation],
-  );
   const targetModel = MODEL_PORTFOLIOS.find((m) => m.id === targetModelId) ?? MODEL_PORTFOLIOS[3];
   const comparison = useMemo(() => compareToModel(portfolio.allocation, targetModel), [portfolio.allocation, targetModel]);
+  const savingsInSync = Math.abs(currentSavings - portfolio.totalValue) < 1;
 
   // Quando o ticker digitado existe no universo, infere o tipo automaticamente.
   function onTicker(ticker: string) {
@@ -198,6 +199,17 @@ export function HoldingsTracker({
             </div>
           </div>
 
+          <div className="row" style={{ marginTop: 10, alignItems: "center" }}>
+            <button className="secondary" onClick={onUseAsSavings} disabled={savingsInSync} style={{ flex: "0 0 auto" }}>
+              {savingsInSync ? "✓ Planejador sincronizado com a carteira" : "Usar carteira como ponto de partida do plano"}
+            </button>
+            {!savingsInSync && (
+              <span className="muted" style={{ fontSize: "0.78rem" }}>
+                Define "Já acumulado" = {money(portfolio.totalValue)} (hoje: {money(currentSavings)}).
+              </span>
+            )}
+          </div>
+
           {/* Posições */}
           <h3>Posições</h3>
           <table>
@@ -264,6 +276,45 @@ export function HoldingsTracker({
                         {c.delta > 0 ? "reduzir " : "aumentar "}{pct(Math.abs(c.delta), 1)}
                       </span>
                     )}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+
+          {/* Roteiro do aporte do mês */}
+          <h3>Para onde vai o aporte deste mês</h3>
+          <p className="muted" style={{ fontSize: "0.8rem", marginTop: 0 }}>
+            Divisão do aporte de {money2(route.total)} para aproximar sua carteira do alvo <strong>só comprando</strong> —
+            sem vender nada, sem gerar imposto. Blocos acima do alvo recebem zero e diluem com o tempo.
+          </p>
+          {route.warnings.map((w, i) => (
+            <div key={i} className="disclaimer" style={{ marginBottom: 8 }}>⚠ {w}</div>
+          ))}
+          <table>
+            <thead>
+              <tr>
+                <th>Bloco</th>
+                <th className="num">Aportar</th>
+                <th className="num">Peso atual → após aporte</th>
+                <th>Onde comprar (screening)</th>
+              </tr>
+            </thead>
+            <tbody>
+              {route.slices.map((s) => (
+                <tr key={s.sleeve}>
+                  <td>{s.label}</td>
+                  <td className="num">
+                    {s.amount < 0.5 ? <span className="badge gray">—</span> : <strong>{money2(s.amount)}</strong>}
+                  </td>
+                  <td className="num">
+                    {pct(s.currentWeight, 1)} → {pct(s.afterWeight, 1)}
+                    <span className="muted" style={{ fontSize: "0.72rem" }}> (alvo {pct(s.targetWeight, 0)})</span>
+                  </td>
+                  <td style={{ fontSize: "0.8rem" }}>
+                    {s.examples.length > 0
+                      ? s.examples.map((e) => <span key={e.ticker} title={e.name} style={{ marginRight: 8 }}><strong>{e.ticker}</strong></span>)
+                      : <span className="muted">categoria — escolha a oferta na corretora</span>}
                   </td>
                 </tr>
               ))}
