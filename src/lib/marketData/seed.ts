@@ -66,4 +66,6 @@ export const SEED_ASSETS: AssetSnapshot[] = [
   seed({ ticker: "KDIF11", name: "Kinea Infra (FI-Infra)", kind: "fiInfra", family: "rendaFixa", price: 105, rate: 0.075, rateKind: "ipcaPlus", fgc: false, rating: "AA", dividendYield12m: 0.123, avgDailyLiquidity: 3_000_000 }),
   seed({ ticker: "JURO11", name: "Sparta Infra (FI-Infra)", kind: "fiInfra", family: "rendaFixa", price: 9.6, rate: 0.08, rateKind: "ipcaPlus", fgc: false, rating: "A", dividendYield12m: 0.13, avgDailyLiquidity: 5_000_000 }),
   seed({ ticker: "CPTI11", name: "Capitânia Infra (FI-Infra)", kind: "fiInfra", family: "rendaFixa", price: 8.7, rate: 0.078, rateKind: "ipcaPlus", fgc: false, rating: "A", dividendYield12m: 0.125, avgDailyLiquidity: 4_000_000 }),
+  seed({ ticker: "BODB11", name: "BTG Pactual Crédito Infra (FI-Infra)", kind: "fiInfra", family: "rendaFixa", price: 9.4, rate: 0.077, rateKind: "ipcaPlus", fgc: false, rating: "AA", dividendYield12m: 0.128, avgDailyLiquidity: 4_500_000 }),
+  seed({ ticker: "CDII11", name: "Sparta Infra Crédito (FI-Infra)", kind: "fiInfra", family: "rendaFixa", price: 9.8, rate: 0.076, rateKind: "ipcaPlus", fgc: false, rating: "A", dividendYield12m: 0.126, avgDailyLiquidity: 3_500_000 }),
 ];

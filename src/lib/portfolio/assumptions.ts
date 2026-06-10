@@ -26,7 +26,7 @@ export interface SleeveAssumption {
 
 export const DEFAULT_SLEEVES: Record<SleeveKey, SleeveAssumption> = {
   ipcaIncome: { label: "IPCA+ / RendA+ (renda)", role: "income", indexed: true, realRate: 0.065, taxRate: 0.15 },
-  isentos: { label: "Isentos: LCI/LCA/CRI/CRA/incentivadas", role: "income", indexed: true, realRate: 0.06, taxRate: 0 },
+  isentos: { label: "Isentos: FI-Infra, LCI/LCA, CRI/CRA, incentivadas", role: "income", indexed: true, realRate: 0.06, taxRate: 0 },
   fiiAcoes: { label: "FIIs / ações pagadoras", role: "income", indexed: false, cashYield: 0.085, taxRate: 0 },
   etfGrowth: { label: "ETFs ações/internacional (crescimento)", role: "growth", realReturn: 0.07, cgRate: 0.175 },
   caixa: { label: "Selic / DI (caixa)", role: "cash", indexed: true, realRate: 0.015, taxRate: 0.15 },
