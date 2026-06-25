@@ -29,6 +29,7 @@ import {
 } from "./lib/portfolio";
 import { runAdvisor, DEFAULT_MODEL, type AdvisorContext, type AdvisorOutput } from "./lib/advisor";
 import { SensitivityChart } from "./components/SensitivityChart";
+import { AccumulationRegimes } from "./components/AccumulationRegimes";
 
 import { PlannerForm } from "./components/PlannerForm";
 import { ResultsPanel, type Computed } from "./components/ResultsPanel";
@@ -267,6 +268,9 @@ export default function App() {
         />
       </div>
       <div className="section"><PortfolioCompare projections={portfoliosWithContrib} compositions={compositions} target={scenario.targetMonthlyToday} monthlyContribution={scenario.monthlyContribution} /></div>
+      <div className="section">
+        <AccumulationRegimes grossReal={scenario.realRate} inflation={scenario.inflation} years={scenario.yearsToRetirement} />
+      </div>
       <div className="section">
         <HoldingsTracker
           transactions={transactions}
